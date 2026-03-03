@@ -1,0 +1,28 @@
+# COBOL Account Management System Test Plan
+
+This test plan captures the current business logic and implementation behavior of the COBOL application so business stakeholders can validate expected outcomes before and during migration to Node.js.
+
+| Test Case ID | Test Case Description | Pre-conditions | Test Steps | Expected Result | Actual Result | Status (Pass/Fail) | Comments |
+|---|---|---|---|---|---|---|---|
+| TC-001 | Application starts and displays main menu options | Executable `accountsystem` is available and runnable | 1. Run `./accountsystem` 2. Observe initial screen | Menu displays: Account Management System, options 1-4, and prompt `Enter your choice (1-4):` | TBD | TBD | Validates user entry point and navigation options |
+| TC-002 | View balance shows default opening balance on first read | Fresh app session (no prior write in same run) | 1. Start app 2. Enter `1` (View Balance) | Output includes `Current balance:` with value `1000.00` | TBD | TBD | Confirms initial in-memory balance in `DataProgram` |
+| TC-003 | Credit account with valid positive amount updates balance | App started; current balance known (e.g., 1000.00) | 1. Enter `2` (Credit Account) 2. Enter `200.00` 3. Enter `1` (View Balance) | Credit confirmation shown; new balance is `1200.00`; subsequent view shows same `1200.00` | TBD | TBD | Validates READ -> ADD -> WRITE flow |
+| TC-004 | Debit account with amount less than current balance updates balance | App started; set balance to 1200.00 (e.g., by TC-003) | 1. Enter `3` (Debit Account) 2. Enter `300.00` 3. Enter `1` (View Balance) | Debit confirmation shown; new balance is `900.00`; subsequent view shows `900.00` | TBD | TBD | Validates READ -> compare -> SUBTRACT -> WRITE flow |
+| TC-005 | Debit account with amount equal to current balance is allowed and results in zero | App started; set balance to 500.00 | 1. Enter `3` 2. Enter `500.00` 3. Enter `1` | Debit succeeds; message shows new balance `0.00`; view balance returns `0.00` | TBD | TBD | Boundary check for `FINAL-BALANCE >= AMOUNT` |
+| TC-006 | Debit account with amount greater than balance is rejected | App started; set balance to 400.00 | 1. Enter `3` 2. Enter `500.00` 3. Enter `1` | Displays `Insufficient funds for this debit.`; balance remains `400.00` | TBD | TBD | Confirms no WRITE occurs on insufficient funds |
+| TC-007 | Multiple credits and debits in one session preserve running balance | App started with 1000.00 | 1. Credit `150.00` 2. Debit `50.00` 3. Credit `25.00` 4. View balance | Final balance shown is `1125.00` | TBD | TBD | Validates state persistence across repeated operations in same run |
+| TC-008 | Invalid menu selection (below range) is handled gracefully | App started and waiting for menu choice | 1. Enter `0` | Displays `Invalid choice, please select 1-4.` and returns to menu loop | TBD | TBD | Input validation at menu level |
+| TC-009 | Invalid menu selection (above range) is handled gracefully | App started and waiting for menu choice | 1. Enter `9` | Displays `Invalid choice, please select 1-4.` and returns to menu loop | TBD | TBD | Input validation at menu level |
+| TC-010 | Exit option terminates the application loop cleanly | App started and waiting for menu choice | 1. Enter `4` | Program exits loop and displays `Exiting the program. Goodbye!` then terminates | TBD | TBD | Validates controlled shutdown path |
+| TC-011 | View balance after failed debit confirms unchanged value | App started; set balance to 250.00 | 1. Debit `300.00` 2. View balance | Insufficient funds message appears; viewed balance remains `250.00` | TBD | TBD | Confirms data integrity after rejection path |
+| TC-012 | Credit with zero amount does not change balance | App started; current balance known | 1. Enter `2` 2. Enter `0.00` 3. Enter `1` | Operation reports credited and balance remains unchanged | TBD | TBD | Edge case: zero-value transaction behavior in current implementation |
+| TC-013 | Debit with zero amount does not change balance | App started; current balance known | 1. Enter `3` 2. Enter `0.00` 3. Enter `1` | Debit is accepted; balance remains unchanged | TBD | TBD | Edge case due to `>=` comparison logic |
+| TC-014 | Balance resets to default on new app process start | Complete one run with changed balance, then restart app | 1. In run #1, change balance (e.g., credit 100) and exit 2. Start app again 3. View balance | New run starts with `1000.00` balance | TBD | TBD | Current implementation stores balance in program memory only (non-persistent across restarts) |
+| TC-015 | Transaction amount with two decimal places is processed correctly | App started; current balance known | 1. Credit `10.25` 2. Debit `5.10` 3. View balance | Arithmetic reflects cents precision supported by `PIC 9(6)V99` | TBD | TBD | Important for parity checks in Node.js decimal handling |
+| TC-016 | Large valid amount within field capacity is accepted | App started with known balance | 1. Credit a maximum-format amount within `9(6)V99` (e.g., `999999.99` if environment allows) 2. View balance | System accepts value format and updates according to COBOL numeric field rules | TBD | TBD | Validate field-size behavior to inform migration constraints |
+
+## Notes for Stakeholder Validation
+
+- The current COBOL design uses in-memory storage (`STORAGE-BALANCE`), so balance is preserved only during a single process run.
+- Business behavior in this plan reflects current implementation, including edge cases such as zero-amount credit/debit.
+- Use this as the baseline acceptance checklist before implementing equivalent unit/integration tests in Node.js.
